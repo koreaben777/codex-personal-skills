@@ -1,0 +1,4 @@
+interface:
+  display_name: "Developer Review Router"
+  short_description: "Developer 구현 검토와 다음 채팅 라우팅"
+  default_prompt: "$route-developer-review를 사용해 Developer 구현을 검토하고 다음 작업을 라우팅하세요."
