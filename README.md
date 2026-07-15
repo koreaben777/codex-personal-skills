@@ -1,4 +1,4 @@
-# June Kim's Codex Personal Skills
+# Codex Personal Skills
 
 Codex App에서 반복적으로 사용하는 개인 스킬을 다른 사용자도 검토·설치할 수 있도록 묶은 공개 배포본입니다.
 
