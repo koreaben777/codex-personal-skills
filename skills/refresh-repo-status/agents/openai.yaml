@@ -1,0 +1,4 @@
+interface:
+  display_name: "저장소 현황 동기화"
+  short_description: "구현·README·GitHub Issues를 사실 기반으로 정리"
+  default_prompt: "Use $refresh-repo-status to verify the current implementation, refresh the README, and reconcile GitHub Issues."

@@ -8,6 +8,7 @@ Codex App에서 반복적으로 사용하는 개인 스킬을 다른 사용자�
 | --- | --- | --- |
 | `team-based-review-loop` | 다른 Codex 스레드의 구현을 리뷰하고, 수정 요청과 동일 팀 재검토를 한 번 수행 | `SKILL.md`, `agents/openai.yaml` |
 | `route-developer-review` | Planner·Developer·Review Team 스레드의 증거를 확인하고 다음 작업을 하나만 라우팅 | `SKILL.md`, `agents/openai.yaml`, `references/contracts.md` |
+| `refresh-repo-status` | 현재 구현·README·GitHub Issues를 검증된 범위에 맞춰 동기화 | `SKILL.md`, `agents/openai.yaml` |
 | `third-party-codex-updater` | 서드파티 Codex 플러그인·스킬 업데이트를 안전 업데이트와 수동 검토로 분류 | `SKILL.md`, `agents/openai.yaml`, `scripts/check_updates.py` |
 
 `agents/openai.yaml`은 Codex App의 스킬 목록에 표시될 이름·설명·기본 호출문을 제공합니다. `references/contracts.md`와 `scripts/check_updates.py`는 각각 라우팅 계약과 updater 실행에 필요한 런타임 파일이므로 제외하면 안 됩니다.
@@ -32,6 +33,12 @@ Codex App에서 반복적으로 사용하는 개인 스킬을 다른 사용자�
 - 동일 프로젝트의 Planner·Developer·Review Team 스레드
 - 프로젝트별 `git status`, diff, 테스트, 산출물, 현재 문서에 대한 읽기 권한
 - Codex thread 도구가 없으면 실제 전송 대신 준비된 프롬프트와 triage 기록만 생성
+
+`refresh-repo-status` 추가 조건:
+
+- 대상 Git 저장소의 현재 checkout, 원격 default branch, README, 테스트·산출물에 대한 읽기 권한
+- GitHub Issues를 확인하려면 GitHub connector 또는 인증된 `gh` CLI
+- Issue·README 원격 변경은 사용자가 명시적으로 허용한 범위에서만 수행
 
 `third-party-codex-updater` 추가 조건:
 
@@ -67,6 +74,7 @@ CODEX_SKILLS_DIR="$HOME/.agents/skills" ./install.sh --force
 ```text
 $team-based-review-loop
 $route-developer-review
+$refresh-repo-status
 $third-party-codex-updater
 ```
 
