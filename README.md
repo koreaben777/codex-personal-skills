@@ -6,12 +6,13 @@ Codex App에서 반복적으로 사용하는 개인 스킬을 다른 사용자�
 
 | 스킬 | 역할 | 필수 파일 |
 | --- | --- | --- |
-| `team-based-review-loop` | 다른 Codex 스레드의 구현을 리뷰하고, 수정 요청과 동일 팀 재검토를 한 번 수행 | `SKILL.md`, `agents/openai.yaml` |
+| `general-review-loop` | Planner가 범위를 정하고 위임·증거 확인·한 번의 fixback/re-review를 관리 | `SKILL.md`, `agents/openai.yaml` |
 | `route-developer-review` | Planner·Developer·Review Team 스레드의 증거를 확인하고 다음 작업을 하나만 라우팅 | `SKILL.md`, `agents/openai.yaml`, `references/contracts.md` |
 | `refresh-repo-status` | 현재 구현·README·GitHub Issues를 검증된 범위에 맞춰 동기화 | `SKILL.md`, `agents/openai.yaml` |
 | `third-party-codex-updater` | 서드파티 Codex 플러그인·스킬 업데이트를 안전 업데이트와 수동 검토로 분류 | `SKILL.md`, `agents/openai.yaml`, `scripts/check_updates.py` |
 
 `agents/openai.yaml`은 Codex App의 스킬 목록에 표시될 이름·설명·기본 호출문을 제공합니다. `references/contracts.md`와 `scripts/check_updates.py`는 각각 라우팅 계약과 updater 실행에 필요한 런타임 파일이므로 제외하면 안 됩니다.
+이 배포본의 review·repository-sync·updater 스킬은 외부 상태 변경과 장시간 루프의 자동 선택을 막기 위해 명시 호출 전용입니다.
 
 ## 요구 조건
 
@@ -21,12 +22,12 @@ Codex App에서 반복적으로 사용하는 개인 스킬을 다른 사용자�
 - Git과 Python 3
 - 스킬을 설치할 수 있는 사용자 스킬 디렉터리
 
-`team-based-review-loop` 추가 조건:
+`general-review-loop` 추가 조건:
 
-- 대상 Codex 구현 스레드와 worktree를 식별할 수 있어야 함
-- 초기 리뷰와 재리뷰에 사용할 프로젝트 테스트·문서·산출물에 접근할 수 있어야 함
-- `@ponytail`, `agency-router`의 선택 역할, `codex-fable5` 스타일은 리뷰 범위에 따라 선택적으로 필요함
-- subagent 사용은 사용자가 명시적으로 허용했거나 이미 승인한 경우에만 수행
+- 여러 단계 작업의 범위·권한·완료 기준을 확인할 수 있어야 함
+- 스레드나 worktree를 넘나들면 프로젝트 `cwd`, thread ID, branch, `HEAD`를 확인해야 함
+- 실제 산출물과 테스트를 읽고 `reported`, `observed`, `not verified`를 구분해야 함
+- 한 사이클의 fixback과 동일 범위 재검토 뒤 `PASS`, `NEEDS_WORK`, `BLOCKED` 중 하나로 닫아야 함
 
 `route-developer-review` 추가 조건:
 
@@ -72,7 +73,7 @@ CODEX_SKILLS_DIR="$HOME/.agents/skills" ./install.sh --force
 설치 후 새 Codex App 작업을 열거나 앱을 재시작하면 스킬 메타데이터가 다시 검색됩니다. 다음과 같이 명시적으로 호출할 수 있습니다.
 
 ```text
-$team-based-review-loop
+$general-review-loop
 $route-developer-review
 $refresh-repo-status
 $third-party-codex-updater
@@ -98,7 +99,7 @@ python "$CODEX_SKILLS_DIR/third-party-codex-updater/scripts/check_updates.py" --
 ## 안전한 사용 원칙
 
 - 개인 세션 원문, 토큰, credential, private key, `.env` 파일은 이 저장소에 넣지 않습니다.
-- `team-based-review-loop`와 `route-developer-review`는 구현 스레드의 최종 답변만 믿지 않고 live repository 증거를 다시 확인합니다.
+- `general-review-loop`와 `route-developer-review`는 구현 스레드의 최종 답변만 믿지 않고 live repository 증거를 다시 확인합니다.
 - `route-developer-review`는 한 번에 `Developer fixback` 또는 `Review Team review` 중 하나만 선택합니다.
 - 리뷰 문서는 기존 파일을 덮어쓰지 않고 고유한 timestamp 경로에 저장합니다.
 - updater가 만든 clone과 로컬 변경사항은 사용자가 검토하기 전까지 삭제·대체하지 않습니다.

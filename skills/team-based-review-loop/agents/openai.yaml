@@ -1,4 +1,0 @@
-interface:
-  display_name: "Team Review Loop"
-  short_description: "Run a review, fixback, and re-review loop."
-  default_prompt: "Use $team-based-review-loop to run a one-cycle implementation review loop."

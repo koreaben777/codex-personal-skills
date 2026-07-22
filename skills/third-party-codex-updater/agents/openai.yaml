@@ -2,3 +2,6 @@ interface:
   display_name: "Third-party Codex Updater"
   short_description: "Safely check and update third-party Codex skills/plugins."
   default_prompt: "Use $third-party-codex-updater to check third-party Codex plugin and skill updates safely."
+
+policy:
+  allow_implicit_invocation: false

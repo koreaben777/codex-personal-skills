@@ -1,0 +1,7 @@
+interface:
+  display_name: "General Review Loop"
+  short_description: "Planner-led task delegation and outcome review"
+  default_prompt: "Use $general-review-loop to scope, delegate, and verify a bounded task cycle."
+
+policy:
+  allow_implicit_invocation: false
