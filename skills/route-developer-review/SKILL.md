@@ -1,41 +1,61 @@
 ---
 name: route-developer-review
-description: Use when a Codex project uses separate Planner, Developer, and Review Team threads and the user asks to inspect implementation status, reconcile repository evidence, or decide the next thread handoff.
+description: Use when a project has separate Planner, Developer, and Review Team threads and work must be coordinated across implementation evidence, independent review, fixback cycles, or approval-gated promotion.
 ---
 
-# Route Developer Review
+# Planner Developer Review Loop
 
 ## Overview
 
-Treat the three-thread setup as an evidence-backed state machine. Inspect the Developer claim, persist a non-overwriting triage record, then send at most one instruction: Developer fixback or Review Team review.
+Planner is the coordination owner and evidence judge. The workflow is a bounded loop: Planner may handle inspection, documentation, and coordination directly; Developer owns implementation; Review Team independently judges review readiness and defects. The result returns to Planner before the next decision.
 
-## Workflow
+## Roles
 
-1. Identify the project root and its existing `Developer` and `Review Team` threads. Match by project/cwd before title. If multiple matches remain, stop and ask; never route by title alone. Do not create a replacement thread unless the user explicitly requests one.
-2. Read the Developer's latest completed turn and status. If it is still running, do not duplicate work; report that state or wait as requested.
-3. Inspect live evidence: `git status`, intended diff, applicable spec/plan, tests, artifacts, and current-state docs. A Developer final answer is a claim, not proof. Preserve unrelated dirty changes.
-4. Read [references/contracts.md](references/contracts.md). Create a unique, exclusive triage record under the repository's established review/status directory. If none exists, use `docs/reviews/YYYY-MM-DD-HHMM-developer-handoff-triage.md`. Never overwrite an earlier record or ask Review Team to edit it.
-5. Classify the result using the decision contract below.
-6. Send one scoped prompt to the selected existing thread using the reference contract. Omit model overrides unless requested.
-7. Report the record, route, thread, and reason. Delivery is not completion.
+| Role | Owns | Must not do |
+|---|---|---|
+| Planner | project/thread identity, scope, live evidence, triage record, route decision, approval gates | treat a Developer report as proof or duplicate a running implementation |
+| Developer | scoped code, tests, artifacts, and isolated-workspace implementation | widen scope or commit/push without explicit authorization |
+| Review Team | read-only independent review and a separate `PASS`/`CHANGES_REQUESTED` report | edit implementation or the Planner triage record |
 
-## Decision Contract
+## Loop
 
-| Observable state | Route |
+1. Resolve the project root and existing `Developer` and `Review Team` threads by `cwd` or saved project. Record exact IDs. A same-named thread in another project is not a match. If identity or authority remains ambiguous, stop with `BLOCKED_NEEDS_USER`.
+2. Read the latest completed turn and current status. If the target thread is running, do not send duplicate work. Planner may continue only with non-overlapping inspection, documentation, or coordination work.
+3. Build an evidence ledger before routing: separate `Reported`, `Observed`, and `Not Verified`. Inspect `git status`, intended diff, applicable plan/spec, tests, artifacts, current-state docs, and safety boundaries. Preserve unrelated dirty changes.
+4. Choose the owner. Planner handles read-only investigation, factual status updates, documentation, and triage. Send implementation or artifact work to Developer. Send independent quality judgment to Review Team only after the requested slice is review-ready.
+5. Create one new, immutable triage record for each routing event using [references/contracts.md](references/contracts.md). Never overwrite an earlier cycle and never ask Review Team to edit it.
+6. Activate exactly one route:
+   - missing required deliverable, observed failure, stale current docs, artifact mismatch, or unresolved known finding -> `DEVELOPER_FIXBACK`;
+   - concrete Developer completion evidence, present deliverables, consistent docs/artifacts, and no known finding -> `REVIEW_TEAM`;
+   - running target -> `RUNNING_NO_DUPLICATE`;
+   - ambiguous identity or missing authority -> `BLOCKED_NEEDS_USER`.
+
+## Review Outcomes
+
+- `PASS`: report the review and stop the code-review cycle. Commit, promotion, push, deploy, reindex, rebuild, or service restart is a separate authorized scope. If authorized, create a new promotion triage record and re-check the exact candidate before routing it.
+- `CHANGES_REQUESTED`: send one focused Developer fixback covering required findings and acceptance checks. Wait for completion, create a new triage record, then route the corrected slice to Review Team. Optional cleanup is allowed only when it is inside the same reviewed scope and does not obscure the required fix.
+- New work after `PASS`: start a new bounded cycle; do not append unrelated work to a reviewed slice.
+
+## Prompt Contracts
+
+Developer prompts contain: project and isolated workspace, exact scope, evidence-backed findings, minimal fixes in priority order, acceptance tests/artifacts, exclusions and safety boundaries, completion marker, and the no-stage/no-commit/no-push rule unless separately authorized.
+
+Review prompts contain: project and scope, triage/spec/report paths, exact independent checks, read-only boundary, separate immutable report path, severity-ordered findings, and a final `PASS` or `CHANGES_REQUESTED` verdict.
+
+## Guardrails
+
+- Delivery of a prompt is not completion; verify the resulting thread and repository state.
+- Never route by title alone, send both routes for one state, or trust “all tests pass” without evidence.
+- Do not merge or push merely because Review Team returned `PASS`; preserve the explicit promotion gate.
+- Do not expose secrets, raw user data, or unnecessary session text in records or prompts.
+
+## Quick Reference
+
+| State | Planner action |
 |---|---|
-| Required deliverable missing, observed check failing, stale current docs, known defect, artifact mismatch, or unresolved review feedback | Developer only |
-| Developer reports completion with concrete verification, required deliverables are observed, artifacts/docs do not contradict the report, and no known finding remains | Review Team only |
-| Target thread is running | Do not send duplicate work |
-| Project/thread identity is ambiguous or required authority is missing | Stop and ask the user |
-
-Exactly one route may be active. Do not send a known-broken slice to Review Team or speculative cleanup to Developer after review readiness.
-
-Planner need not duplicate every expensive test before routing. Independent reruns and code-quality judgment belong to Review Team. An item listed as `Not Verified` is not itself a defect; route it to Developer only when it exposes a missing required deliverable or contradicts observed evidence.
-
-## Evidence Rules
-
-- Separate `reported`, `observed`, and `not verified` facts.
-- Run proportionate read-only checks; do not implement the fix in the Planner thread.
-- Preserve historical reports. Route stale current-state corrections unless a factual Planner update is explicitly authorized.
-- Use unique timestamps or the repository's sequence convention. A fixed filename such as `developer-implementation-review.md` is unsafe unless the repository explicitly treats it as a replaceable current-state file.
-- Review Team writes a separate review artifact and returns `PASS` or `CHANGES_REQUESTED`; it does not mutate the Planner triage record or implementation.
+| Planner-only inspection/docs | perform directly if non-overlapping |
+| Developer running | wait; no duplicate implementation |
+| Developer incomplete or contradicted | one Developer fixback |
+| Developer complete and evidence-consistent | one Review Team request |
+| Review `CHANGES_REQUESTED` | Developer fixback, then re-review |
+| Review `PASS` | report; separate promotion authorization |

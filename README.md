@@ -7,7 +7,7 @@ Codex App에서 반복적으로 사용하는 개인 스킬을 다른 사용자�
 | 스킬 | 역할 | 필수 파일 |
 | --- | --- | --- |
 | `general-review-loop` | Planner가 범위를 정하고 위임·증거 확인·한 번의 fixback/re-review를 관리 | `SKILL.md`, `agents/openai.yaml` |
-| `route-developer-review` | Planner·Developer·Review Team 스레드의 증거를 확인하고 다음 작업을 하나만 라우팅 | `SKILL.md`, `agents/openai.yaml`, `references/contracts.md` |
+| `route-developer-review` | Planner가 구현 증거·독립 리뷰·fixback·승인 게이트를 하나의 제한된 루프로 조정 | `SKILL.md`, `agents/openai.yaml`, `references/contracts.md` |
 | `refresh-repo-status` | 현재 구현·README·GitHub Issues를 검증된 범위에 맞춰 동기화 | `SKILL.md`, `agents/openai.yaml` |
 | `third-party-codex-updater` | 서드파티 Codex 플러그인·스킬 업데이트를 안전 업데이트와 수동 검토로 분류 | `SKILL.md`, `agents/openai.yaml`, `scripts/check_updates.py` |
 
@@ -34,6 +34,7 @@ Codex App에서 반복적으로 사용하는 개인 스킬을 다른 사용자�
 - 동일 프로젝트의 Planner·Developer·Review Team 스레드
 - 프로젝트별 `git status`, diff, 테스트, 산출물, 현재 문서에 대한 읽기 권한
 - Codex thread 도구가 없으면 실제 전송 대신 준비된 프롬프트와 triage 기록만 생성
+- Review `PASS`와 commit·push·promotion·deploy 권한을 분리하여 관리
 
 `refresh-repo-status` 추가 조건:
 

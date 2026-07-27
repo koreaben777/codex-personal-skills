@@ -10,6 +10,7 @@ Create a new record with these sections:
 # Developer Handoff Triage
 
 - Timestamp:
+- Cycle: unique cycle or routing-event identifier
 - Project root:
 - Developer thread:
 - Review Team thread:
@@ -39,6 +40,12 @@ Severity, evidence path/line when available, and required resolution.
 
 Target thread ID and the exact prompt sent, or why no prompt was sent.
 ```
+
+## Loop Contract
+
+The Planner owns the loop and may complete non-overlapping read-only, documentation, and coordination work directly. Code, tests, or generated implementation artifacts belong to Developer; independent quality judgment belongs to Review Team. A routing event has one active owner and one immutable triage record.
+
+After `CHANGES_REQUESTED`, route one focused fixback to Developer and wait for a new completion record before requesting re-review. After `PASS`, stop the review cycle. Promotion, commit, push, deployment, rebuild, reindex, and service restart require a separate authorized scope and a new evidence check; they are not implied by review readiness.
 
 Use the repository's naming convention when it already provides immutable numbered or dated review records. Otherwise use `docs/reviews/YYYY-MM-DD-HHMM-developer-handoff-triage.md`. Test for an existing path before writing; choose a later timestamp or sequence rather than overwriting.
 

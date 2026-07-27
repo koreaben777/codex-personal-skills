@@ -23,8 +23,8 @@ Planner leads the work to verified completion. Apply the loop to code, documents
 
 When work spans Codex threads or worktrees, apply one bounded review cycle:
 
-1. Resolve the project by `cwd` or worktree, then record exact thread IDs, branch, and `HEAD`. Do not match by title alone or duplicate a running owner.
-2. Write an immutable evidence ledger before routing. Include requested scope, `git status`, intended diff, plan/spec, tests, artifacts, and current-state documents.
+1. Resolve the project by `cwd` or worktree, then record the exact thread IDs, branch, and `HEAD`. Do not match by title alone or duplicate a running owner.
+2. Write an immutable evidence ledger before routing. Include the requested scope, `git status`, intended diff, plan/spec, tests, artifacts, and current-state documents.
 3. Route exactly one next action: owner fixback when required evidence is missing or contradictory, or independent review when completion evidence is concrete and consistent.
 4. After a fixback, inspect the returned state and re-review the same scope. Do not silently start a second fixback cycle.
 5. Record findings as closed, still open, newly found, or low-risk cleanup, with a final `PASS`, `NEEDS_WORK`, or `BLOCKED` outcome.
@@ -34,8 +34,8 @@ When work spans Codex threads or worktrees, apply one bounded review cycle:
 | Role | Responsibility |
 |---|---|
 | Planner | scope, sequencing, ownership, evidence, final decision, and approval gates |
-| Worker | assigned implementation or investigation and a factual completion report |
-| Reviewer | independent quality or acceptance review when risk requires it |
+| Worker | the assigned implementation or investigation and a factual completion report |
+| Reviewer | independent quality or acceptance review when the risk or task requires it |
 
 Planner may review direct work. Use an independent Reviewer when a second judgment materially reduces risk; skip ceremonial review for trivial read-only work.
 
@@ -51,11 +51,23 @@ For a review handoff, also provide the immutable report path, exact independent 
 - `NEEDS_WORK`: send one focused correction with the observed finding and acceptance check, then review the returned result again.
 - `BLOCKED`: state the missing authority, input, or identity and do not guess.
 
-## Common mistakes
+## Quick Reference
+
+| Situation | Next action |
+|---|---|
+| Small read-only task | Planner handles it directly |
+| Specialized or long task | Delegate one bounded slice |
+| Worker reports completion | Inspect output and evidence |
+| Required output missing or contradicted | Focused correction |
+| High-risk external action | Review first; require clear authorization |
+| Unrelated next request | New cycle |
+
+## Common Mistakes
 
 - Delegating everything instead of assessing Planner-owned work.
 - Treating “done” or “tests passed” as verification.
 - Mixing unrelated tasks into a reviewed slice.
 - Sending multiple overlapping instructions before the owner returns.
+- Treating delivery of a handoff as completion.
 - Routing by thread title without confirming project identity.
 - Expanding a completed review into an unrequested second cycle.

@@ -1,7 +1,7 @@
 interface:
-  display_name: "Developer Review Router"
-  short_description: "Developer 구현 검토와 다음 채팅 라우팅"
-  default_prompt: "Use $route-developer-review to verify Developer evidence and route the next owner."
+  display_name: "Planner Developer Review Loop"
+  short_description: "Planner 주도 구현·독립 리뷰·fixback 루프"
+  default_prompt: "Use $route-developer-review to verify implementation evidence and route the next owner."
 
 policy:
   allow_implicit_invocation: false
