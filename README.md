@@ -6,12 +6,13 @@ Codex App에서 반복적으로 사용하는 개인 스킬을 다른 사용자�
 
 | 스킬 | 역할 | 필수 파일 |
 | --- | --- | --- |
-| `general-review-loop` | Planner가 범위를 정하고 위임·증거 확인·한 번의 fixback/re-review를 관리 | `SKILL.md`, `agents/openai.yaml` |
+| `general-review-loop` | Planner가 동일 프로젝트의 기존 Developer·Review Team 스레드로 범위를 라우팅하고 한 번의 fixback/re-review를 관리 | `SKILL.md`, `agents/openai.yaml` |
 | `route-developer-review` | Planner가 구현 증거·독립 리뷰·fixback·승인 게이트를 하나의 제한된 루프로 조정 | `SKILL.md`, `agents/openai.yaml`, `references/contracts.md` |
 | `refresh-repo-status` | 현재 구현·README·GitHub Issues를 검증된 범위에 맞춰 동기화 | `SKILL.md`, `agents/openai.yaml` |
 | `third-party-codex-updater` | 서드파티 Codex 플러그인·스킬 업데이트를 안전 업데이트와 수동 검토로 분류 | `SKILL.md`, `agents/openai.yaml`, `scripts/check_updates.py` |
 
 `agents/openai.yaml`은 Codex App의 스킬 목록에 표시될 이름·설명·기본 호출문을 제공합니다. `references/contracts.md`와 `scripts/check_updates.py`는 각각 라우팅 계약과 updater 실행에 필요한 런타임 파일이므로 제외하면 안 됩니다.
+`general-review-loop`는 삭제된 `team-based-review-loop`의 일반 검토 원칙을 대체합니다. 이 스킬은 동일 프로젝트에 이미 존재하는 Developer·Review Team 스레드만 재사용하며, 새 스레드 생성·fork·subagent 대체를 수행하지 않습니다. 필요한 기존 스레드가 없거나 식별이 모호하면 `BLOCKED`로 멈춥니다.
 이 배포본의 review·repository-sync·updater 스킬은 외부 상태 변경과 장시간 루프의 자동 선택을 막기 위해 명시 호출 전용입니다.
 
 ## 요구 조건
@@ -25,7 +26,9 @@ Codex App에서 반복적으로 사용하는 개인 스킬을 다른 사용자�
 `general-review-loop` 추가 조건:
 
 - 여러 단계 작업의 범위·권한·완료 기준을 확인할 수 있어야 함
-- 스레드나 worktree를 넘나들면 프로젝트 `cwd`, thread ID, branch, `HEAD`를 확인해야 함
+- 동일 프로젝트의 기존 Developer·Review Team 스레드에 접근하고, 프로젝트 `cwd`, repository/worktree, thread ID, branch, `HEAD`, 현재 상태를 확인할 수 있어야 함
+- 새 스레드 생성·fork·clone·subagent 대체 없이 기존 역할 스레드를 재사용해야 함
+- 기존 역할 스레드가 없거나 일치하지 않으면 새로 만들지 않고 `BLOCKED`로 보고해야 함
 - 실제 산출물과 테스트를 읽고 `reported`, `observed`, `not verified`를 구분해야 함
 - 한 사이클의 fixback과 동일 범위 재검토 뒤 `PASS`, `NEEDS_WORK`, `BLOCKED` 중 하나로 닫아야 함
 

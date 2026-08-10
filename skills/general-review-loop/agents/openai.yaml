@@ -1,7 +1,7 @@
 interface:
   display_name: "General Review Loop"
-  short_description: "Planner-led task delegation and outcome review"
-  default_prompt: "Use $general-review-loop to scope, delegate, and verify a bounded task cycle."
+  short_description: "Planner-led review using existing project threads"
+  default_prompt: "Use $general-review-loop to route a bounded review cycle through existing Developer and Review Team threads."
 
 policy:
   allow_implicit_invocation: false
