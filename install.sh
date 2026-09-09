@@ -29,7 +29,9 @@ while (($#)); do
 done
 
 skills=(
+  aside-workflow
   general-review-loop
+  pair-agent-sync
   route-developer-review
   refresh-repo-status
   third-party-codex-updater

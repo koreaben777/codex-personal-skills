@@ -1,6 +1,6 @@
 ---
 name: third-party-codex-updater
-description: Safely check and update GitHub-installed third-party Codex plugins and local skills. Use when the user asks to inspect, update, preserve, or automate updates for FableCodex, Ponytail, SkillOpt-Sleep, agency-router, codebase-memory-mcp, Superpowers upstream, or other third-party Codex skills/plugins without overwriting local custom work.
+description: Safely check and update GitHub-installed third-party Codex plugins and local skills. Use when the user asks to inspect, update, preserve, or automate updates for FableCodex, Ponytail, Archify, Graphify, Open Code Review, SkillOpt-Sleep, agency-router, codebase-memory-mcp, Superpowers upstream, or other third-party Codex skills/plugins without overwriting local custom work.
 ---
 
 # Third-party Codex Updater
@@ -17,6 +17,8 @@ python "${CODEX_SKILLS_DIR:-${CODEX_HOME:-$HOME/.codex}/skills}/third-party-code
   - `codex-fable5@fablecodex`: clean local repo, fast-forward only, tests pass, then `codex plugin add`.
   - `ponytail@ponytail`: `codex plugin marketplace upgrade ponytail`, then `codex plugin add`.
 - Do not auto-merge or replace:
+  - `archify`, `graphify`, and `open-code-review-delegate`: compare their official versions and report manual review; do not overwrite installed skills, Graphify's tool environment, or the local OCR compatibility normalization.
+  - `animation-vocabulary`, `apple-design`, `emil-design-eng`, `improve-animations`, and `review-animations`: report manual review only until an upstream source is explicitly recorded.
   - `SkillOpt-Sleep`: preserve custom branch/commit, report upstream tag and conflicts.
   - `codebase-memory-mcp`: keep a clean latest-tag clone, do not replace MCP binaries or DGX config.
   - `superpowers`: keep OpenAI-curated pinned install, clone upstream only for comparison.

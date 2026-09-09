@@ -6,12 +6,14 @@ Codex App에서 반복적으로 사용하는 개인 스킬을 다른 사용자�
 
 | 스킬 | 역할 | 필수 파일 |
 | --- | --- | --- |
+| `aside-workflow` | Aside Browser 작업을 Codex MCP와 직접 CLI 중 적절한 경로로 안전하게 라우팅 | `SKILL.md`, `agents/openai.yaml` |
 | `general-review-loop` | Planner가 동일 프로젝트의 기존 Developer·Review Team 스레드로 범위를 라우팅하고 한 번의 fixback/re-review를 관리 | `SKILL.md`, `agents/openai.yaml` |
+| `pair-agent-sync` | Claude Code와 Codex의 프로젝트 작업 이력을 읽기 전용으로 대조해 근거 수준별 동기화 노트를 작성 | `SKILL.md`, `scan_pair.py` |
 | `route-developer-review` | Planner가 구현 증거·독립 리뷰·fixback·승인 게이트를 하나의 제한된 루프로 조정 | `SKILL.md`, `agents/openai.yaml`, `references/contracts.md` |
 | `refresh-repo-status` | 현재 구현·README·GitHub Issues를 검증된 범위에 맞춰 동기화 | `SKILL.md`, `agents/openai.yaml` |
 | `third-party-codex-updater` | 서드파티 Codex 플러그인·스킬 업데이트를 안전 업데이트와 수동 검토로 분류 | `SKILL.md`, `agents/openai.yaml`, `scripts/check_updates.py` |
 
-`agents/openai.yaml`은 Codex App의 스킬 목록에 표시될 이름·설명·기본 호출문을 제공합니다. `references/contracts.md`와 `scripts/check_updates.py`는 각각 라우팅 계약과 updater 실행에 필요한 런타임 파일이므로 제외하면 안 됩니다.
+각 스킬에 포함된 `agents/openai.yaml`은 Codex App의 스킬 목록에 표시될 이름·설명·기본 호출문을 제공합니다. `references/contracts.md`, `scan_pair.py`, `scripts/check_updates.py`는 각각 라우팅 계약과 실행에 필요한 런타임 파일이므로 제외하면 안 됩니다.
 `general-review-loop`는 삭제된 `team-based-review-loop`의 일반 검토 원칙을 대체합니다. 이 스킬은 동일 프로젝트에 이미 존재하는 Developer·Review Team 스레드만 재사용하며, 새 스레드 생성·fork·subagent 대체를 수행하지 않습니다. 필요한 기존 스레드가 없거나 식별이 모호하면 `BLOCKED`로 멈춥니다.
 이 배포본의 review·repository-sync·updater 스킬은 외부 상태 변경과 장시간 루프의 자동 선택을 막기 위해 명시 호출 전용입니다.
 
@@ -31,6 +33,19 @@ Codex App에서 반복적으로 사용하는 개인 스킬을 다른 사용자�
 - 기존 역할 스레드가 없거나 일치하지 않으면 새로 만들지 않고 `BLOCKED`로 보고해야 함
 - 실제 산출물과 테스트를 읽고 `reported`, `observed`, `not verified`를 구분해야 함
 - 한 사이클의 fixback과 동일 범위 재검토 뒤 `PASS`, `NEEDS_WORK`, `BLOCKED` 중 하나로 닫아야 함
+- Review Team이 코드 리뷰를 내부 분할할 때만 선택적으로 `open-code-review-delegate` 스킬과 `ocr` CLI를 사용함. 이 도구가 없으면 해당 분할 절차를 생략하고 기존 Review Team 스레드가 직접 리뷰해야 함
+
+`aside-workflow` 추가 조건:
+
+- Aside Browser와 로그인된 macOS 사용자 세션
+- Codex에 연결된 Aside MCP 또는 `PATH`에서 실행 가능한 `aside` CLI
+- 기존 탭을 조작하기 전에 현재 페이지 상태를 읽을 수 있는 권한
+
+`pair-agent-sync` 추가 조건:
+
+- Python 3와 대상 프로젝트 파일·Git 이력에 대한 읽기 권한
+- Claude Code 작업을 대조하려면 로컬 `~/.claude/projects` 세션 파일에 대한 읽기 권한
+- 저장소에 포함된 `scan_pair.py`는 독립 실행 파일이며 별도의 Claude 스킬 설치나 심볼릭 링크가 필요하지 않음
 
 `route-developer-review` 추가 조건:
 
@@ -78,6 +93,8 @@ CODEX_SKILLS_DIR="$HOME/.agents/skills" ./install.sh --force
 
 ```text
 $general-review-loop
+$aside-workflow
+$pair-agent-sync
 $route-developer-review
 $refresh-repo-status
 $third-party-codex-updater
@@ -103,6 +120,7 @@ python "$CODEX_SKILLS_DIR/third-party-codex-updater/scripts/check_updates.py" --
 ## 안전한 사용 원칙
 
 - 개인 세션 원문, 토큰, credential, private key, `.env` 파일은 이 저장소에 넣지 않습니다.
+- `pair-agent-sync`가 읽은 대화 원문은 외부로 전송하지 않으며, 결과에는 확인된 사실·대화상 주장·미확인을 분리합니다.
 - `general-review-loop`와 `route-developer-review`는 구현 스레드의 최종 답변만 믿지 않고 live repository 증거를 다시 확인합니다.
 - `route-developer-review`는 한 번에 `Developer fixback` 또는 `Review Team review` 중 하나만 선택합니다.
 - 리뷰 문서는 기존 파일을 덮어쓰지 않고 고유한 timestamp 경로에 저장합니다.
@@ -113,7 +131,7 @@ python "$CODEX_SKILLS_DIR/third-party-codex-updater/scripts/check_updates.py" --
 이 저장소는 개인 스킬의 공개 기준점입니다. 변경 시 다음 순서를 권장합니다.
 
 1. 스킬 본문과 의존 파일을 함께 수정
-2. `bash -n install.sh`와 `python -m py_compile skills/third-party-codex-updater/scripts/check_updates.py` 실행
+2. `bash -n install.sh`, 스킬 구조 검사, 보조 Python 스크립트의 self-test 또는 compile 검사 실행
 3. 개인 경로·credential·세션 원문 검색
 4. 압축본을 새로 생성
 5. 의도한 파일만 commit하고 GitHub에 push

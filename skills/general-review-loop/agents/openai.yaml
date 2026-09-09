@@ -1,7 +1,7 @@
 interface:
   display_name: "General Review Loop"
-  short_description: "Planner-led review using existing project threads"
-  default_prompt: "Use $general-review-loop to route a bounded review cycle through existing Developer and Review Team threads."
+  short_description: "Existing-thread review with bounded delegate lanes"
+  default_prompt: "Use $general-review-loop to route a bounded review cycle through existing Developer and Review Team threads; the existing Review Team may use $open-code-review-delegate for read-only code-review lanes without opening new tasks."
 
 policy:
   allow_implicit_invocation: false

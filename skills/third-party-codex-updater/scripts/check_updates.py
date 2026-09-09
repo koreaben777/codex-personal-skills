@@ -5,6 +5,8 @@ import os
 import re
 import subprocess
 import tempfile
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 
@@ -69,6 +71,31 @@ def latest_tag(url):
     if not tags:
         return None, "no semver tags"
     return max(tags)[1], None
+
+
+def pypi_latest(package):
+    url = f"https://pypi.org/pypi/{package}/json"
+    try:
+        with urllib.request.urlopen(url, timeout=30) as response:
+            payload = json.load(response)
+    except (OSError, urllib.error.URLError, json.JSONDecodeError) as exc:
+        return None, str(exc)
+    version = payload.get("info", {}).get("version")
+    return (version, None) if version else (None, "missing package version")
+
+
+def command_version(cmd):
+    result = run(cmd)
+    if result["code"] != 0:
+        return None, result["err"] or result["out"] or "version command failed"
+    match = re.search(r"\bv?(\d+\.\d+\.\d+)\b", result["out"])
+    return (match.group(1), None) if match else (None, "version not found in command output")
+
+
+def version_status(current, latest):
+    if current and latest and semver(current) == semver(latest):
+        return "current"
+    return "manual-review"
 
 
 def read_plugin_version(path):
@@ -240,6 +267,99 @@ def check_agency(results):
             add_result(results, "agency-router", "current", "selected source roles unchanged")
 
 
+def check_archify(results):
+    skill_dir = HOME / ".codex" / "skills" / "archify"
+    release_file = skill_dir / "skill-release.json"
+    if not release_file.exists():
+        add_result(results, "archify", "missing", str(skill_dir))
+        return
+    try:
+        current = json.loads(release_file.read_text()).get("version")
+    except Exception:
+        current = None
+    latest, err = latest_tag("https://github.com/tt-a1i/archify.git")
+    if err:
+        add_result(results, "archify", "check-failed", err, current=current)
+        return
+    add_result(
+        results,
+        "archify",
+        version_status(current, latest),
+        "official skill update requires a reviewed diff and reinstall; never overwrite automatically",
+        current=current,
+        latest=latest,
+    )
+
+
+def check_graphify(results):
+    skill_dir = HOME / ".codex" / "skills" / "graphify"
+    binary = HOME / ".local" / "bin" / "graphify"
+    if not skill_dir.exists():
+        add_result(results, "graphify", "missing", str(skill_dir))
+        return
+    current, current_err = command_version([str(binary) if binary.exists() else "graphify", "--version"])
+    latest, latest_err = pypi_latest("graphifyy")
+    if current_err or latest_err:
+        add_result(results, "graphify", "check-failed", current_err or latest_err, current=current, latest=latest)
+        return
+    add_result(
+        results,
+        "graphify",
+        version_status(current, latest),
+        "official package/skill update requires review and explicit re-registration; never overwrite automatically",
+        current=current,
+        latest=latest,
+    )
+
+
+def check_open_code_review_delegate(results):
+    skill_dir = HOME / ".codex" / "skills" / "open-code-review-delegate"
+    binary = HOME / ".local" / "bin" / "ocr"
+    if not skill_dir.exists():
+        add_result(results, "open-code-review-delegate", "missing", str(skill_dir))
+        return
+    current, current_err = command_version([str(binary) if binary.exists() else "ocr", "--version"])
+    latest, latest_err = latest_tag("https://github.com/alibaba/open-code-review.git")
+    if current_err or latest_err:
+        add_result(
+            results,
+            "open-code-review-delegate",
+            "check-failed",
+            current_err or latest_err,
+            current=current,
+            latest=latest,
+        )
+        return
+    add_result(
+        results,
+        "open-code-review-delegate",
+        version_status(current, latest),
+        "standalone skill has a local Codex-schema normalization; review before replacing it or the OCR CLI",
+        current=current,
+        latest=latest,
+    )
+
+
+def check_unprovenanced_skills(results):
+    names = [
+        "animation-vocabulary",
+        "apple-design",
+        "emil-design-eng",
+        "improve-animations",
+        "review-animations",
+    ]
+    for name in names:
+        path = HOME / ".codex" / "skills" / name
+        if path.exists():
+            add_result(
+                results,
+                name,
+                "manual-review",
+                "installed local skill has no recorded upstream source; remote update intentionally skipped",
+                path=str(path),
+            )
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply-safe", action="store_true")
@@ -253,6 +373,10 @@ def main():
     check_codebase_memory(results, args.apply_safe)
     check_superpowers(results, args.apply_safe)
     check_agency(results)
+    check_archify(results)
+    check_graphify(results)
+    check_open_code_review_delegate(results)
+    check_unprovenanced_skills(results)
 
     if args.json:
         print(json.dumps({"apply_safe": args.apply_safe, "results": results}, ensure_ascii=False, indent=2))

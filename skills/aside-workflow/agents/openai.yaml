@@ -1,0 +1,3 @@
+interface:
+  display_name: "Aside Workflow"
+  short_description: "Use Aside through MCP or CLI"
