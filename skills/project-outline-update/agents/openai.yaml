@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Outline Update"
+  short_description: "Reconcile evidence into a current project overview"
+  default_prompt: "Use $project-outline-update to prepare an evidence-based update to this project's overview document."

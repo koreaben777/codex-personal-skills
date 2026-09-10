@@ -32,6 +32,7 @@ skills=(
   aside-workflow
   general-review-loop
   pair-agent-sync
+  project-outline-update
   route-developer-review
   refresh-repo-status
   third-party-codex-updater
