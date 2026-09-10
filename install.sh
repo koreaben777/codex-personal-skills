@@ -36,6 +36,7 @@ skills=(
   route-developer-review
   refresh-repo-status
   third-party-codex-updater
+  video-to-md
 )
 
 for skill in "${skills[@]}"; do

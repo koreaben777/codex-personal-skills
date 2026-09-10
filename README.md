@@ -1,6 +1,6 @@
 # Codex Personal Skills
 
-Codex App / Codex CLI에서 쓰는 개인 스킬 7개를 검토·설치할 수 있게 묶은 공개 저장소입니다. 검토·저장소 변경 계열 스킬은 명시 호출 전용이며, `aside-workflow`, `pair-agent-sync`, `project-outline-update`는 요청 목적이 명확히 일치할 때 자동으로 선택될 수 있습니다.
+Codex App / Codex CLI에서 쓰는 개인 스킬 8개를 검토·설치할 수 있게 묶은 공개 저장소입니다. 검토·저장소 변경 계열 스킬은 명시 호출 전용이며, `aside-workflow`, `pair-agent-sync`, `project-outline-update`, `video-to-md`는 요청 목적이 명확히 일치할 때 자동으로 선택될 수 있습니다.
 
 ## 빠른 시작
 
@@ -22,6 +22,7 @@ $project-outline-update
 $route-developer-review
 $refresh-repo-status
 $third-party-codex-updater
+$video-to-md
 ```
 
 설치 확인:
@@ -41,8 +42,9 @@ ls "${CODEX_SKILLS_DIR:-${CODEX_HOME:-$HOME/.codex}/skills}"
 | `aside-workflow` | Aside Browser 작업을 MCP와 CLI 중 어느 경로로 처리할지 안전하게 정하고 싶을 때 | Aside Browser, Aside MCP 또는 `aside` CLI |
 | `general-review-loop` | 같은 프로젝트에 Developer·Review Team 스레드가 이미 있고, Planner 입장에서 한 번의 리뷰·fixback 사이클을 닫고 싶을 때 | 기존 Developer·Review Team 스레드 |
 | `route-developer-review` | Planner·Developer·Review Team 3역할로 구현 증거 확인, 독립 리뷰, 승인 게이트를 돌리고 싶을 때 | 기존 3역할 스레드 |
+| `video-to-md` | 영상·화면녹화 내용을 영상을 못 보는 사람·에이전트가 숙지할 수 있는 마크다운으로 정리하고 싶을 때 | `ffmpeg`/`ffprobe`. 음성 전사는 whisper 계열이 있을 때만(선택) |
 
-혼자 작업하는 일반적인 저장소라면 위 두 개(`refresh-repo-status`, `third-party-codex-updater`)부터 쓰는 것이 가장 부담이 없습니다. 아래 네 개는 각각 외부 도구나 다중 스레드 구성이 전제입니다.
+혼자 작업하는 일반적인 저장소라면 위 두 개(`refresh-repo-status`, `third-party-codex-updater`)부터 쓰는 것이 가장 부담이 없습니다. 나머지는 각각 외부 도구나 다중 스레드 구성이 전제입니다(`video-to-md`는 `ffmpeg`만 있으면 됩니다).
 
 ## 설치 위치와 옵션
 
@@ -58,7 +60,7 @@ CODEX_SKILLS_DIR="$HOME/.agents/skills" ./install.sh
 CODEX_SKILLS_DIR="$HOME/.agents/skills" ./install.sh --force
 ```
 
-`install.sh`는 일곱 스킬 디렉터리를 통째로 복사합니다. 스킬 본문 외에 다음 파일이 실행에 필요하므로 일부만 골라 복사할 때도 함께 가져가야 합니다.
+`install.sh`는 여덟 스킬 디렉터리를 통째로 복사합니다. 스킬 본문 외에 다음 파일이 실행에 필요하므로 일부만 골라 복사할 때도 함께 가져가야 합니다.
 
 | 스킬 | 필수 파일 |
 | --- | --- |
@@ -69,6 +71,7 @@ CODEX_SKILLS_DIR="$HOME/.agents/skills" ./install.sh --force
 | `route-developer-review` | `SKILL.md`, `agents/openai.yaml`, `references/contracts.md` |
 | `refresh-repo-status` | `SKILL.md`, `agents/openai.yaml` |
 | `third-party-codex-updater` | `SKILL.md`, `agents/openai.yaml`, `scripts/check_updates.py` |
+| `video-to-md` | `SKILL.md`, `scripts/vidframes.sh` |
 
 ### 업데이트
 
@@ -78,13 +81,13 @@ git pull
 ./install.sh --force
 ```
 
-`--force`는 이 저장소의 일곱 스킬만 교체하며, 같은 폴더의 다른 스킬은 건드리지 않습니다. 설치본을 직접 수정해 쓰고 있다면 실행 전에 diff를 확인하세요.
+`--force`는 이 저장소의 여덟 스킬만 교체하며, 같은 폴더의 다른 스킬은 건드리지 않습니다. 설치본을 직접 수정해 쓰고 있다면 실행 전에 diff를 확인하세요.
 
 ### 제거
 
 ```bash
 skills_dir="${CODEX_SKILLS_DIR:-${CODEX_HOME:-$HOME/.codex}/skills}"
-for s in aside-workflow general-review-loop pair-agent-sync project-outline-update route-developer-review refresh-repo-status third-party-codex-updater; do
+for s in aside-workflow general-review-loop pair-agent-sync project-outline-update route-developer-review refresh-repo-status third-party-codex-updater video-to-md; do
   rm -rf "$skills_dir/$s"
 done
 ```
@@ -152,6 +155,12 @@ python "$CODEX_SKILLS_DIR/third-party-codex-updater/scripts/check_updates.py" --
 - 프로젝트별 `git status`, diff, 테스트, 산출물, 현재 문서 읽기 권한
 - Codex thread 도구가 없으면 실제 전송 대신 준비된 프롬프트와 triage 기록만 생성
 - Review `PASS`와 commit·push·promotion·deploy 권한은 분리해 관리
+
+**`video-to-md`**
+
+- `ffmpeg`/`ffprobe`가 `PATH`에 있어야 동작(없으면 수행 불가로 명시)
+- 오디오 전사는 whisper 계열 도구가 있을 때만 선택적으로 사용, 없으면 "음성 내용 미확보"로 표기
+- Claude Code·codex·goose 공용이며 런타임별 변형본을 두지 않음. 스킬 실행 중 자신·다른 스킬 사본을 수정하지 않음
 
 ## 포함하지 않는 것
 
