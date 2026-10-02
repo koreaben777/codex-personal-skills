@@ -1,6 +1,6 @@
 # Codex Personal Skills
 
-Codex App / Codex CLI에서 쓰는 개인 스킬 8개를 검토·설치할 수 있게 묶은 공개 저장소입니다. 검토·저장소 변경 계열 스킬은 명시 호출 전용이며, `aside-workflow`, `pair-agent-sync`, `project-outline-update`, `video-to-md`는 요청 목적이 명확히 일치할 때 자동으로 선택될 수 있습니다.
+Codex App / Codex CLI에서 쓰는 개인 스킬 8개와 Claude Code 전용 스킬 2개를 검토·설치할 수 있게 묶은 공개 저장소입니다. 검토·저장소 변경 계열 스킬은 명시 호출 전용이며, `aside-workflow`, `pair-agent-sync`, `project-outline-update`, `video-to-md`는 요청 목적이 명확히 일치할 때 자동으로 선택될 수 있습니다.
 
 ## 빠른 시작
 
@@ -46,6 +46,22 @@ ls "${CODEX_SKILLS_DIR:-${CODEX_HOME:-$HOME/.codex}/skills}"
 
 혼자 작업하는 일반적인 저장소라면 위 두 개(`refresh-repo-status`, `third-party-codex-updater`)부터 쓰는 것이 가장 부담이 없습니다. 나머지는 각각 외부 도구나 다중 스레드 구성이 전제입니다(`video-to-md`는 `ffmpeg`만 있으면 됩니다).
 
+## Claude Code 전용 스킬
+
+`claude-skills/`의 두 스킬은 Claude Code에서만 동작하며, `--claude`를 붙여야 설치됩니다. 기본 위치는 `~/.claude/skills`이고 `CLAUDE_SKILLS_DIR`로 바꿀 수 있습니다. 덮어쓰기 거부와 `--force` 동작은 Codex 쪽과 같습니다.
+
+```bash
+./install.sh --claude
+```
+
+| 스킬 | 이런 상황에 호출 | 추가로 필요한 것 | 필수 파일 |
+| --- | --- | --- | --- |
+| `goose-bridge` | Claude Code와 goose가 헤드리스 CLI로 정해진 횟수만큼 주고받게 하고 싶을 때 | `claude` CLI, `goose` CLI, Python 3 | `SKILL.md` |
+| `third-party-claude-updater` | 제3자 Claude Code 플러그인·스킬·MCP 도구를 안전한 것만 골라 업데이트하고 싶을 때 | `claude plugin` 명령, 네트워크. 항목에 따라 `npm`, `uv` | `SKILL.md`, `scripts/check_updates.py` |
+
+- `goose-bridge`는 한 번 주고받을 때마다 양쪽 제공자의 사용량이 함께 나갑니다. 상대 에이전트의 메시지는 지시가 아니라 자료로 취급합니다.
+- `third-party-claude-updater`의 점검 대상 목록은 작성자의 구성 기준이니 `SKILL.md`와 스크립트를 자신의 구성에 맞게 고쳐 쓰세요. 비교용 clone 위치는 기본 `~/Documents/Codex`이며 `CLAUDE_THIRD_PARTY_CLONE_ROOT`로 바꿉니다. `--apply-safe` 없이는 보고만 합니다.
+
 ## 설치 위치와 옵션
 
 기본 위치는 `${CODEX_HOME:-$HOME/.codex}/skills`입니다. `~/.agents/skills`를 쓰는 환경이면 경로를 지정합니다.
@@ -81,7 +97,7 @@ git pull
 ./install.sh --force
 ```
 
-`--force`는 이 저장소의 여덟 스킬만 교체하며, 같은 폴더의 다른 스킬은 건드리지 않습니다. 설치본을 직접 수정해 쓰고 있다면 실행 전에 diff를 확인하세요.
+`--force`는 이 저장소의 여덟 스킬만 교체하며, 같은 폴더의 다른 스킬은 건드리지 않습니다. Claude Code 전용 스킬은 `./install.sh --claude --force`로 따로 갱신합니다. 설치본을 직접 수정해 쓰고 있다면 실행 전에 diff를 확인하세요.
 
 ### 제거
 
@@ -96,7 +112,7 @@ done
 
 공통:
 
-- Skills를 지원하는 Codex App 또는 Codex CLI
+- Skills를 지원하는 Codex App 또는 Codex CLI (`claude-skills/`는 Claude Code)
 - Git, Python 3
 - 스킬 디렉터리에 대한 쓰기 권한
 
